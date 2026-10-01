@@ -13,6 +13,14 @@ validator in that path. On Debian/Ubuntu also install `libsqlite3-dev`, which
 provides the `sqlite3.h` header needed to compile the default `sqlite_vec`
 extension.
 
+Matrix uses Mautrix's pure Go encryption backend. Include the `goolm` build tag
+when building or checking packages that import the Matrix client; Make targets
+and CI supply it. This avoids a new libolm system dependency. For direct checks:
+
+```bash
+GOFLAGS=-tags=goolm go vet ./...
+```
+
 ### macOS and Linux
 
 ```bash
@@ -111,7 +119,7 @@ make test-v
 
 ### Build tags and assertions
 
-All Go test runs need `-tags "fts5 sqlite_vec"`; the Make targets supply these
+All Go test runs need `-tags "fts5 sqlite_vec goolm"`; the Make targets supply these
 automatically. Use `assert` and `require` from testify, with expected values
 first. See [AGENTS.md](https://github.com/kenn-io/msgvault/blob/main/AGENTS.md)
 for repository testing rules.

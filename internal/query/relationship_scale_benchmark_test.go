@@ -19,8 +19,8 @@ var relationshipScaleRoot = flag.String("relationship-bench-root", "", "Scratch 
 // Run Build once, then Queries against the same scratch directory:
 //
 //	relationship_bench_root=$(mktemp -d)
-//	go test -tags 'fts5 sqlite_vec' ./internal/query -run '^$' -bench '^BenchmarkRelationshipScaleBuild$' -benchtime=1x -args -relationship-bench-root="$relationship_bench_root"
-//	go test -tags 'fts5 sqlite_vec' ./internal/query -run '^$' -bench '^BenchmarkRelationshipScaleQueries$' -benchtime=4x -args -relationship-bench-root="$relationship_bench_root"
+//	go test -tags 'fts5 sqlite_vec goolm' ./internal/query -run '^$' -bench '^BenchmarkRelationshipScaleBuild$' -benchtime=1x -args -relationship-bench-root="$relationship_bench_root"
+//	go test -tags 'fts5 sqlite_vec goolm' ./internal/query -run '^$' -bench '^BenchmarkRelationshipScaleQueries$' -benchtime=4x -args -relationship-bench-root="$relationship_bench_root"
 //
 // The fixture has 2,000,000 email messages across 303 contacts, plus 2,000
 // messages in one 304-member chat. Half the email is in 2024; the rest and the

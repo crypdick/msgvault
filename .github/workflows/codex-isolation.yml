@@ -35,6 +35,6 @@ jobs:
           CGO_ENABLED=0 go build -trimpath -buildvcs=false -o "$RUNNER_TEMP/codex-artifact/msgvault-codex-bridge" ./cmd/msgvault-codex-bridge
           chmod 755 "$RUNNER_TEMP/codex-artifact/msgvault-codex-bridge"
           bridge_digest=$(sha256sum "$RUNNER_TEMP/codex-artifact/msgvault-codex-bridge" | cut -d' ' -f1)
-          go test -tags "fts5 sqlite_vec" -c -ldflags="-X go.kenn.io/msgvault/internal/peoplesweep.codexBridgeSHA256=$bridge_digest" -o "$RUNNER_TEMP/codex-artifact/peoplesweep.test" ./internal/peoplesweep
+          go test -tags "fts5 sqlite_vec goolm" -c -ldflags="-X go.kenn.io/msgvault/internal/peoplesweep.codexBridgeSHA256=$bridge_digest" -o "$RUNNER_TEMP/codex-artifact/peoplesweep.test" ./internal/peoplesweep
           cd internal/peoplesweep
           MSGVAULT_CODEX_TEST_DEFAULT_BRIDGE=1 "$RUNNER_TEMP/codex-artifact/peoplesweep.test" -test.timeout=5m -test.run='^TestCodex' -test.count=1

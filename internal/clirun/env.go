@@ -7,6 +7,12 @@ const EnvIMAPPassword = "MSGVAULT_IMAP_PASSWORD" // #nosec G101 -- environment v
 // to a daemon-owned CLI subprocess.
 const EnvBeeperToken = "MSGVAULT_BEEPER_TOKEN" // #nosec G101 -- environment variable name, not a credential value
 
+// EnvMatrixPassword carries a Matrix password to a daemon-owned CLI subprocess.
+const EnvMatrixPassword = "MSGVAULT_MATRIX_PASSWORD" // #nosec G101 -- environment variable name, not a credential value
+
+// EnvMatrixRecoveryKey carries a Matrix recovery secret to a daemon-owned CLI subprocess.
+const EnvMatrixRecoveryKey = "MSGVAULT_MATRIX_RECOVERY_KEY" // #nosec G101 -- environment variable name, not a credential value
+
 // EnvDiscordToken names the env var used to pass a Discord bot token to a
 // daemon-owned CLI subprocess.
 const EnvDiscordToken = "MSGVAULT_DISCORD_TOKEN" // #nosec G101 -- environment variable name, not a credential value
@@ -20,7 +26,7 @@ const EnvRemoteDeleteOptIn = "MSGVAULT_ENABLE_REMOTE_DELETE"
 
 func EnvAllowed(name string) bool {
 	switch name {
-	case EnvIMAPPassword, EnvBeeperToken, EnvDiscordToken, EnvSlackToken, EnvRemoteDeleteOptIn:
+	case EnvIMAPPassword, EnvBeeperToken, EnvMatrixPassword, EnvMatrixRecoveryKey, EnvDiscordToken, EnvSlackToken, EnvRemoteDeleteOptIn:
 		return true
 	default:
 		return false

@@ -887,6 +887,52 @@ the source message has since been deleted. See
 
 ---
 
+## add-matrix, recover-matrix, matrix-rooms
+
+Connect a Matrix account, recover encrypted history keys, and list joined rooms.
+See [Matrix](usage/matrix.md) for setup, credential handling, and current scope.
+These commands are local fork functionality and are not in an upstream release.
+
+```bash
+msgvault add-matrix --homeserver https://matrix.example.com \
+  --user @alice:example.com --password-stdin < /path/to/private-password-file
+msgvault recover-matrix --secret-stdin < /path/to/private-recovery-key-file
+msgvault matrix-rooms
+```
+
+`add-matrix` requires `--homeserver` and the full `--user` ID. Read the password
+from stdin with `--password-stdin`, or supply `MSGVAULT_MATRIX_PASSWORD` through
+the environment. `recover-matrix` accepts the recovery key or passphrase through
+`--secret-stdin` or `MSGVAULT_MATRIX_RECOVERY_KEY`. Credentials are forwarded
+through the daemon credential channel and never placed in command arguments.
+One account owns the session directory; reauthentication preserves its device.
+
+---
+
+## sync-matrix
+
+Archive text from explicitly selected joined Matrix rooms. Setup and current
+limitations are documented in [Matrix](usage/matrix.md). This command is local
+fork functionality and is not included in an upstream release.
+
+```bash
+msgvault sync-matrix --room '!chat:example.com'
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `--room` | Required | Joined room ID; repeat to select several rooms |
+| `--max-pages` | `0` | Maximum pages across this invocation; zero means unlimited |
+| `--full` | `false` | Restart selected rooms' history walks and repair archived rows |
+| `--build-cache` | `false` | Force analytics cache refresh after sync |
+| `--no-build-cache` | `false` | Skip analytics cache refresh after sync |
+
+The daemon uses its dedicated `tokens/matrix` device session and built-in
+Matrix client. History pages checkpoint after
+successful persistence. Later runs resume backfill or fetch new events.
+
+---
+
 ## add-beeper
 
 Register the chat accounts connected to a locally running

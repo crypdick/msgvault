@@ -15,6 +15,7 @@ For maintenance rules, see the [documentation contributor guide](../README.md).
 | Accounts, identities, collections, and duplicate handling | [Design set](accounts-identities-collections-dedup/README.md) | [Accounts](../usage/multi-account.md), [people](../usage/people.md), [deduplication](../usage/deduplication.md) |
 | Attachment packs and restore | [Packed attachments](packed-attachments-design.md), [pack extraction](kit-packstore-extraction-design.md), [native restore](pack-native-restore-design.md) | [Storage](../architecture/storage.md), [backup format](../architecture/backup-format.md) |
 | Slack ingestion and reply discovery | [Ingestion](slack-ingestion-design.md), [reply sweep](slack-reply-sweep-design.md) | [Slack](../usage/slack.md) |
+| Matrix encryption and history ingestion | [Client decision](matrix-client-design.md) | [Matrix](../usage/matrix.md) |
 | Message exports | [Design](message-export-design.md) and [plan](message-export-plan.md) | [Exporting](../usage/exporting.md) |
 | People and relationships | [Relationship index](relationship-list-index-design.md), [merge reversal](person-merge-reversal.md), [conversation brief](last-time-we-talked-design.md) | [People and profiles](../usage/people.md) |
 | Web UI navigation and visual language | [Design](web-ui-overhaul-design.md), [foundation plan](web-ui-overhaul-pr1-plan.md), and [Everything and Files plan](web-ui-overhaul-pr2-plan.md) | [Web UI](../web-ui.md) |

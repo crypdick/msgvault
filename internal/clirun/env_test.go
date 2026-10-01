@@ -13,6 +13,8 @@ func TestEnvAllowed(t *testing.T) {
 	}{
 		{name: EnvIMAPPassword, want: true},
 		{name: EnvBeeperToken, want: true},
+		{name: EnvMatrixPassword, want: true},
+		{name: EnvMatrixRecoveryKey, want: true},
 		{name: EnvDiscordToken, want: true},
 		{name: EnvRemoteDeleteOptIn, want: true},
 		{name: "PATH", want: false},
