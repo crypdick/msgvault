@@ -33,11 +33,15 @@ func (a Account) Identifier() string {
 }
 
 func validID(id string, sigil byte) bool {
-	if len(id) < 4 || id[0] != sigil || strings.ContainsAny(id, "\r\n\t ") {
+	if len(id) < 2 || id[0] != sigil || strings.ContainsAny(id, "\r\n\t ") {
 		return false
 	}
 	local, server, found := strings.Cut(id[1:], ":")
-	return found && local != "" && server != ""
+	if !found {
+		// Room version 12 removed the domain; user IDs still require it.
+		return sigil == '!'
+	}
+	return local != "" && server != ""
 }
 
 // PageRequest is the Matrix client's history pagination contract.

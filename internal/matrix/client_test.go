@@ -25,8 +25,16 @@ import (
 )
 
 func TestClientLoginRecoveryEncryptedArchiveAndReopen(t *testing.T) {
-	for _, encrypted := range []bool{false, true} {
-		t.Run(fmt.Sprintf("encrypted=%t", encrypted), func(t *testing.T) {
+	for _, test := range []struct {
+		roomID    string
+		encrypted bool
+	}{
+		{testRoom, false}, {testRoom, true},
+		{"!0123456789abcdefghijklmnopqrstuvwxyzABCDEFG", false},
+		{"!0123456789abcdefghijklmnopqrstuvwxyzABCDEFG", true},
+	} {
+		t.Run(fmt.Sprintf("room=%s/encrypted=%t", test.roomID, test.encrypted), func(t *testing.T) {
+			testRoom, encrypted := test.roomID, test.encrypted
 			assert := assert.New(t)
 			require := require.New(t)
 			ctx := context.Background()
@@ -45,7 +53,7 @@ func TestClientLoginRecoveryEncryptedArchiveAndReopen(t *testing.T) {
 				SenderClaimedKeys: backup.SenderClaimedKeys{Ed25519: id.Ed25519(base64.RawStdEncoding.EncodeToString(make([]byte, 32)))}}
 			encryptedKey, err := backup.EncryptSessionData(backupKey, keyData)
 			require.NoError(err)
-			ciphertext, err := outbound.Encrypt([]byte(`{"room_id":"!chat:example.com","type":"m.room.message","content":{"msgtype":"m.text","body":"SDK archive integration"}}`))
+			ciphertext, err := outbound.Encrypt([]byte(fmt.Sprintf(`{"room_id":%q,"type":"m.room.message","content":{"msgtype":"m.text","body":"SDK archive integration"}}`, testRoom)))
 			require.NoError(err)
 			var mu sync.Mutex
 			var deviceKeys any
@@ -78,7 +86,7 @@ func TestClientLoginRecoveryEncryptedArchiveAndReopen(t *testing.T) {
 					}
 					write(map[string]any{"device_keys": keys, "failures": map[string]any{}})
 				case strings.HasSuffix(r.URL.Path, "/sync"):
-					_, _ = fmt.Fprint(w, `{"next_batch":"sync-next","rooms":{"join":{"!chat:example.com":{"state":{"events":[]},"timeline":{"events":[],"limited":false,"prev_batch":"head"}}}}}`)
+					_, _ = fmt.Fprintf(w, `{"next_batch":"sync-next","rooms":{"join":{%q:{"state":{"events":[]},"timeline":{"events":[],"limited":false,"prev_batch":"head"}}}}}`, testRoom)
 				case strings.HasSuffix(r.URL.Path, "/joined_rooms"):
 					write(map[string]any{"joined_rooms": []string{testRoom}})
 				case strings.Contains(r.URL.Path, "/state/m.room.name"):

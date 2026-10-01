@@ -182,3 +182,34 @@ func TestImportCancellationRetainsCompletedPages(t *testing.T) {
 	}, ImportOptions{RoomIDs: []string{testRoom}})
 	require.NoError(err)
 }
+
+func TestImportRejectsInvalidIdentifiers(t *testing.T) {
+	for _, test := range []struct {
+		userID string
+		roomID string
+	}{
+		{"@alice", testRoom},
+		{"@:example.com", testRoom},
+		{testAccount.UserID, ""},
+		{testAccount.UserID, "!"},
+		{testAccount.UserID, "#chat:example.com"},
+		{testAccount.UserID, "!:example.com"},
+		{testAccount.UserID, "!chat:"},
+		{testAccount.UserID, "!chat room"},
+	} {
+		t.Run(test.userID+"/"+test.roomID, func(t *testing.T) {
+			assert := assert.New(t)
+			require := require.New(t)
+			account := testAccount
+			account.UserID = test.userID
+			readCalled := false
+			_, err := Import(context.Background(), testutil.NewTestStore(t), account,
+				func(context.Context, PageRequest) (Page, error) {
+					readCalled = true
+					return historyPage("head", ""), nil
+				}, ImportOptions{RoomIDs: []string{test.roomID}})
+			require.Error(err)
+			assert.False(readCalled)
+		})
+	}
+}

@@ -705,6 +705,8 @@ func TestSearchCmd_MessageTypeFlagScopesResults(t *testing.T) {
 	require.NoError(err, "create email conversation")
 	calendarConv, err := s.EnsureConversationWithType(src.ID, "calendar-thread", "calendar_event", "")
 	require.NoError(err, "create calendar conversation")
+	matrixConv, err := s.EnsureConversationWithType(src.ID, "matrix-room", "group_chat", "")
+	require.NoError(err, "create Matrix conversation")
 	_, err = s.UpsertMessage(&store.Message{
 		SourceID: src.ID, ConversationID: emailConv,
 		SourceMessageID: "email-1", MessageType: "email",
@@ -719,6 +721,13 @@ func TestSearchCmd_MessageTypeFlagScopesResults(t *testing.T) {
 		SentAt:  sql.NullTime{Time: time.Date(2024, 5, 2, 12, 0, 0, 0, time.UTC), Valid: true},
 	})
 	require.NoError(err, "insert calendar event")
+	_, err = s.UpsertMessage(&store.Message{
+		SourceID: src.ID, ConversationID: matrixConv,
+		SourceMessageID: "$matrix-1", MessageType: "matrix",
+		Subject: sql.NullString{String: "Matrix chat", Valid: true},
+		SentAt:  sql.NullTime{Time: time.Date(2024, 5, 3, 12, 0, 0, 0, time.UTC), Valid: true},
+	})
+	require.NoError(err, "insert Matrix message")
 	startStoreQueryAPIDaemon(t, tmpDir, s)
 
 	savedCfg := cfg
@@ -739,18 +748,25 @@ func TestSearchCmd_MessageTypeFlagScopesResults(t *testing.T) {
 	useLocal = true
 	invocationFromContext(testCtx).options.useLocal = true
 
-	done := captureStdout(t)
-	root := newTestRootCmd()
-	root.SetContext(testCtx)
-	root.AddCommand(searchCmd)
-	root.SetArgs([]string{
-		"search", "--message-type", "calendar_event", "--json",
-	})
-	err = root.Execute()
-	out := done()
-	require.NoError(err, "message-type search failed")
-	assert.Contains(out, "Calendar planning", "expected calendar event in output")
-	assert.NotContains(out, "Email hello", "email message must be filtered out")
+	for _, test := range []struct{ messageType, want, excluded string }{
+		{"calendar_event", "Calendar planning", "Matrix chat"},
+		{"matrix", "Matrix chat", "Calendar planning"},
+	} {
+		resetSearchFlags()
+		done := captureStdout(t)
+		root := newTestRootCmd()
+		root.SetContext(testCtx)
+		root.AddCommand(searchCmd)
+		root.SetArgs([]string{
+			"search", "--message-type", test.messageType, "--json",
+		})
+		err = root.Execute()
+		out := done()
+		require.NoError(err, "message-type search failed")
+		assert.Contains(out, test.want)
+		assert.NotContains(out, test.excluded)
+		assert.NotContains(out, "Email hello", "email message must be filtered out")
+	}
 }
 
 func TestSearchCmd_InvalidQueryFailsFastWithoutDB(t *testing.T) {

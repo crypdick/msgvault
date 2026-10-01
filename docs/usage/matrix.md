@@ -81,6 +81,9 @@ msgvault sync-matrix --room '!chat:example.com' --max-pages 10
 ```
 
 The first sync reads history backward in pages of at most 100 timeline events.
+Room IDs may include a server (`!chat:example.com`) or use the domainless format
+introduced in [room version 12](https://spec.matrix.org/v1.18/appendices/#room-ids).
+Use the exact ID returned by `matrix-rooms`.
 Unsupported events still count toward a page. `--max-pages` bounds pages across
 the entire invocation; zero means unlimited. Bounded runs rotate among selected
 rooms on later invocations so a busy room does not starve the others.
@@ -101,6 +104,11 @@ use `message_type` `matrix` and raw format `matrix_json`. Bridged conversations
 remain Matrix records; this importer does not infer native WhatsApp or Signal
 identity from a bridge-generated sender name. Encrypted snapshots retain the
 original ciphertext event in `msgvault_encrypted_event`.
+
+```bash
+msgvault search --message-type matrix
+msgvault search 'project update' --message-type matrix
+```
 
 ## Verify changes
 
