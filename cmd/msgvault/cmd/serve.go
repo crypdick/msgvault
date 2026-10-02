@@ -529,6 +529,12 @@ func runServe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("schedule person enrichment: %w", err)
 	}
 
+	if err := registerMatrixSchedulerJob(sched, cfg.Matrix, invocationBoundJobRun(state, func(ctx context.Context) error {
+		return runScheduledMatrixSync(ctx, s)
+	})); err != nil {
+		return fmt.Errorf("schedule Matrix sync: %w", err)
+	}
+
 	if cfg.Beeper.Enabled && cfg.Beeper.Schedule == "" {
 		logger.Warn("beeper is enabled but has no schedule — the daemon will not sync it; its freshness will eventually go stale",
 			"hint", `set a cron schedule (e.g. "*/30 * * * *") on the [beeper] entry`)

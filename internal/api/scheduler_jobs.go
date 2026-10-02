@@ -43,6 +43,9 @@ const BeeperJobName = sourceTypeBeeper
 // Slack workspace source.
 const SlackJobName = sourceTypeSlack
 
+// MatrixJobName drives the dedicated Matrix account's configured chat archive.
+const MatrixJobName = "matrix"
+
 // CardDAVJobName is the stable singleton scheduler identity for the configured
 // CardDAV account.
 const CardDAVJobName = "carddav"
@@ -116,6 +119,8 @@ func SchedulerJobNameForSource(sourceType, identifier string) (string, bool) {
 		// One configured Slack workspace maps to one store source and one
 		// singleton daemon job.
 		return SlackJobName, true
+	case "matrix":
+		return MatrixJobName, true
 	default:
 		return "", false
 	}

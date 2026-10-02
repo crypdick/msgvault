@@ -268,6 +268,28 @@ func (c *Client) Rooms(ctx context.Context) ([]Room, error) {
 	return rooms, nil
 }
 
+// ChatRoomIDs discovers joined chats, excluding organizational Matrix spaces.
+// Read create events instead of names so scheduling needs no display metadata.
+func (c *Client) ChatRoomIDs(ctx context.Context) ([]string, error) {
+	response, err := c.sdk.JoinedRooms(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list joined Matrix chats: %w", err)
+	}
+	rooms := make([]string, 0, len(response.JoinedRooms))
+	for _, roomID := range response.JoinedRooms {
+		var create struct {
+			Type string `json:"type"`
+		}
+		if err := c.sdk.StateEvent(ctx, roomID, event.StateCreate, "", &create); err != nil {
+			return nil, fmt.Errorf("classify joined Matrix room: %w", err)
+		}
+		if create.Type != "m.space" {
+			rooms = append(rooms, roomID.String())
+		}
+	}
+	return rooms, nil
+}
+
 func (c *Client) roomName(ctx context.Context, roomID id.RoomID) string {
 	var name event.RoomNameEventContent
 	if c.sdk.StateEvent(ctx, roomID, event.StateRoomName, "", &name) == nil && name.Name != "" {

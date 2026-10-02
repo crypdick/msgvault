@@ -9,10 +9,10 @@ chat UI and does not need to run during ingestion. Existing bridges make other
 networks' conversations available as Matrix rooms.
 
 This functionality is local fork work and is not part of an upstream release.
-The first implementation supports text, notice, and emote messages from rooms
-you explicitly select. It preserves provider events and decrypted snapshots
+The integration supports text, notice, and emote messages from selected rooms
+or all joined chats. It preserves provider events and decrypted snapshots
 alongside message bodies, sender identities, and conversations. It does not download media,
-apply edits, reconcile redactions, import reactions, or schedule automatic sync.
+apply edits, reconcile redactions, or import reactions.
 Rooms currently use the generic group-chat conversation type. Only senders of
 archived text appear in the participant roster; this is not a complete member
 list.
@@ -109,6 +109,40 @@ original ciphertext event in `msgvault_encrypted_event`.
 msgvault search --message-type matrix
 msgvault search 'project update' --message-type matrix
 ```
+
+## Enable automatic sync
+
+Configure the daemon to poll the connected account:
+
+```toml
+[server]
+daemon_idle_timeout = "0s"
+
+[matrix]
+enabled = true
+schedule = "*/5 * * * *"
+max_pages = 100
+# rooms = ["!chat:example.com"]
+```
+
+Omit `rooms` to discover all joined chat rooms on each run, including newly
+joined rooms. Matrix spaces are excluded. Set `rooms` to a list of exact IDs
+to restrict the scheduled archive. Manual `sync-matrix` still requires `--room`.
+
+Restart the daemon after changing its configuration. Keep it running with a
+service manager or `msgvault daemon start`; the idle timeout above prevents
+an idle background daemon from stopping the schedule. A foreground
+`msgvault serve` process runs until stopped.
+
+Each pass processes at most `max_pages` history pages across the selected
+rooms. It resumes checkpoints on the next tick, rotates bounded runs among
+rooms, and refreshes the existing browse cache after writes. Scheduled passes
+never use `--full`. They do not overlap other archive mutations. A failed or
+interrupted page retains its previous cursor for retry.
+
+Automatic sync uses the saved device and recovered room keys. It does not
+store a password or recovery secret in configuration. If encrypted history
+needs additional keys, run `recover-matrix`, then retry the sync.
 
 ## Verify changes
 

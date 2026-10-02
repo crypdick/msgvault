@@ -57,6 +57,7 @@ func TestClientLoginRecoveryEncryptedArchiveAndReopen(t *testing.T) {
 			require.NoError(err)
 			var mu sync.Mutex
 			var deviceKeys any
+			joinedRooms := []string{testRoom, "!space:example.com"}
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				write := func(value any) { _ = json.MarshalWrite(w, value) }
@@ -88,7 +89,15 @@ func TestClientLoginRecoveryEncryptedArchiveAndReopen(t *testing.T) {
 				case strings.HasSuffix(r.URL.Path, "/sync"):
 					_, _ = fmt.Fprintf(w, `{"next_batch":"sync-next","rooms":{"join":{%q:{"state":{"events":[]},"timeline":{"events":[],"limited":false,"prev_batch":"head"}}}}}`, testRoom)
 				case strings.HasSuffix(r.URL.Path, "/joined_rooms"):
-					write(map[string]any{"joined_rooms": []string{testRoom}})
+					mu.Lock()
+					write(map[string]any{"joined_rooms": joinedRooms})
+					mu.Unlock()
+				case strings.Contains(r.URL.Path, "/state/m.room.create"):
+					if strings.Contains(r.URL.Path, "!space:example.com") {
+						_, _ = fmt.Fprint(w, `{"type":"m.space"}`)
+					} else {
+						_, _ = fmt.Fprint(w, `{}`)
+					}
 				case strings.Contains(r.URL.Path, "/state/m.room.name"):
 					_, _ = fmt.Fprint(w, `{"name":"Example chat"}`)
 				case strings.HasSuffix(r.URL.Path, "/messages"):
@@ -133,7 +142,16 @@ func TestClientLoginRecoveryEncryptedArchiveAndReopen(t *testing.T) {
 			require.NoError(client.SyncKeys(ctx))
 			rooms, err := client.Rooms(ctx)
 			require.NoError(err)
-			assert.Equal([]Room{{RoomID: testRoom, Name: "Example chat"}}, rooms)
+			assert.Equal([]Room{{RoomID: testRoom, Name: "Example chat"}, {RoomID: "!space:example.com", Name: "Example chat"}}, rooms)
+			chatIDs, err := client.ChatRoomIDs(ctx)
+			require.NoError(err)
+			assert.Equal([]string{testRoom}, chatIDs)
+			mu.Lock()
+			joinedRooms = append(joinedRooms, "!newchat:example.com")
+			mu.Unlock()
+			chatIDs, err = client.ChatRoomIDs(ctx)
+			require.NoError(err)
+			assert.Equal([]string{testRoom, "!newchat:example.com"}, chatIDs)
 			st := testutil.NewTestStore(t)
 			if encrypted {
 				_, err := Import(ctx, st, client.Account(), client.Page, ImportOptions{RoomIDs: []string{testRoom}})

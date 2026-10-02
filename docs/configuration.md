@@ -875,6 +875,31 @@ enabled = true
 | `schedule` | — | Cron expression used by `msgvault serve` |
 | `enabled` | `false` | Whether the source is daemon-scheduled |
 
+### `[matrix]`
+
+Schedule the connected Matrix account's chat archive. Authorize it with
+`add-matrix` first; see [Matrix](usage/matrix.md) for setup and encrypted
+history recovery.
+
+| Key | Default | Description |
+|---|---|---|
+| `enabled` | `false` | Enable the Matrix scheduler job |
+| `schedule` | `""` | Five-field cron schedule; empty disables scheduled sync |
+| `rooms` | `[]` | Exact room IDs; empty discovers all joined chats on each run, excluding spaces |
+| `max_pages` | `100` | Positive history-page limit per scheduled pass; subsequent runs resume |
+
+```toml
+[matrix]
+enabled = true
+schedule = "*/5 * * * *"
+max_pages = 100
+```
+
+Keep the daemon running with a service manager, or set
+`[server].daemon_idle_timeout = "0s"` for a background daemon. Restart it after
+changing this section. Credentials remain in the existing protected device
+session, outside configuration.
+
 ### `[beeper]`
 
 Archive chats from a locally running [Beeper Desktop](/docs/usage/beeper/). A single

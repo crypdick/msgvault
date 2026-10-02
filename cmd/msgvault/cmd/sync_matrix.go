@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"go.kenn.io/msgvault/internal/matrix"
+	"go.kenn.io/msgvault/internal/store"
 )
 
 func newSyncMatrixCmd() *cobra.Command {
@@ -48,20 +50,12 @@ func runSyncMatrix(cmd *cobra.Command, opts matrix.ImportOptions) error {
 	}
 	ctx, stop := withInterruptCancel(cmd, "\nInterrupted. Saving Matrix checkpoint...")
 	defer stop()
-	client, err := matrix.NewClient(ctx, filepath.Join(state.cfg.TokensDir(), "matrix"))
-	if err != nil {
-		return err
-	}
-	defer func() { _ = client.Close() }()
-	if err := client.SyncKeys(ctx); err != nil {
-		return err
-	}
 	st, cleanup, err := openWritableStoreAndInitForIngestInvocation(state)
 	if err != nil {
 		return err
 	}
 	defer cleanup()
-	sum, importErr := matrix.Import(ctx, st, client.Account(), client.Page, opts)
+	sum, importErr := syncMatrixArchive(ctx, st, state.cfg.TokensDir(), opts)
 	if sum != nil {
 		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Matrix: %d pages, %d added, %d updated, %d unsupported events skipped\n",
 			sum.PagesProcessed, sum.MessagesAdded, sum.MessagesUpdated, sum.EventsSkipped)
@@ -71,6 +65,29 @@ func runSyncMatrix(cmd *cobra.Command, opts matrix.ImportOptions) error {
 	}
 	return errors.Join(importErr, runPostSourceCreateMigrationsForInvocation(st, state),
 		rebuildCacheAfterManualSync(state.cfg.DatabaseDSN(), state))
+}
+
+// Manual commands require explicit rooms. Scheduled runs pass an empty list
+// to discover all joined chats, including rooms joined since the previous run.
+func syncMatrixArchive(ctx context.Context, st *store.Store, tokensDir string, opts matrix.ImportOptions) (*matrix.ImportSummary, error) {
+	client, err := matrix.NewClient(ctx, filepath.Join(tokensDir, "matrix"))
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = client.Close() }()
+	if err := client.SyncKeys(ctx); err != nil {
+		return nil, err
+	}
+	if len(opts.RoomIDs) == 0 {
+		opts.RoomIDs, err = client.ChatRoomIDs(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if len(opts.RoomIDs) == 0 {
+			return &matrix.ImportSummary{HistoryComplete: true}, nil
+		}
+	}
+	return matrix.Import(ctx, st, client.Account(), client.Page, opts)
 }
 
 func init() {

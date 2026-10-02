@@ -505,6 +505,7 @@ type Config struct {
 	GCal           []GCalSource                    `toml:"gcal"`
 	Beeper         BeeperConfig                    `toml:"beeper"`
 	Slack          SlackConfig                     `toml:"slack"`
+	Matrix         MatrixConfig                    `toml:"matrix"`
 	Granola        []GranolaSource                 `toml:"granola"`
 	Circleback     []CirclebackSource              `toml:"circleback"`
 	NotionMeetings []NotionMeetingsSource          `toml:"notion_meetings"`
@@ -823,6 +824,7 @@ func NewDefaultConfig() *Config {
 		// Group-room media is capped by default; see DefaultMediaMaxParticipants.
 		Beeper:  BeeperConfig{MediaMaxParticipants: DefaultMediaMaxParticipants},
 		Slack:   SlackConfig{MediaMaxParticipants: DefaultMediaMaxParticipants},
+		Matrix:  MatrixConfig{MaxPages: 100},
 		Discord: DiscordConfig{MediaMaxParticipants: DefaultMediaMaxParticipants},
 		Teams:   TeamsConfig{MediaMaxParticipants: DefaultMediaMaxParticipants},
 	}
@@ -1012,6 +1014,9 @@ func decodeConfig(cfg *Config, path string, explicit, homeOverride bool, content
 	cfg.Server.ApplyDefaults()
 	cfg.Discord.ApplyDefaults()
 	if err := cfg.Server.Validate(); err != nil {
+		return nil, err
+	}
+	if err := cfg.Matrix.Validate(); err != nil {
 		return nil, err
 	}
 	cfg.Analytics.ApplyDefaults()
